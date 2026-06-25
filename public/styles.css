@@ -174,13 +174,13 @@ label {
 .btn-add:hover { background: #e6e9ff; }
 #btn-eliminar-cat {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 /* ===== Foto ===== */
 .foto-caja {
   position: relative;
-  width: 150px; height: 150px;
+  width: 240px; height: 150px;
   border-radius: 14px;
   border: 2px dashed var(--borde-fuerte);
   background: #fafbff;
