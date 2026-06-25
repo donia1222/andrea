@@ -14,11 +14,9 @@
 
   <main class="layout">
     <!-- Lista / historial de platos guardados -->
-    <aside class="panel historial">
-      <h2>Platos guardados</h2>
+    <aside class="panel historial" id="historial">
       <input id="buscar" class="input" type="search" placeholder="Buscar plato…" />
       <ul id="lista-platos" class="lista-platos"></ul>
-      <p id="historial-vacio" class="vacio">Aún no hay platos. Crea el primero con “+ Nuevo plato”.</p>
     </aside>
 
     <!-- Editor del plato -->
@@ -77,7 +75,7 @@
     </section>
 
     <section class="panel bienvenida" id="bienvenida">
-      <p>Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.</p>
+      <p id="bienvenida-texto">Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.</p>
     </section>
   </main>
 

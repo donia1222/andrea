@@ -56,7 +56,6 @@ let actual = null; // plato que se está editando (copia de trabajo)
 // --- Referencias al DOM ------------------------------------------------------
 const $ = (sel) => document.querySelector(sel);
 const lista = $("#lista-platos");
-const historialVacio = $("#historial-vacio");
 const editor = $("#editor");
 const bienvenida = $("#bienvenida");
 const cuerpoIng = $("#cuerpo-ing");
@@ -121,7 +120,11 @@ function renderLista() {
   const filtro = inputBuscar.value.trim().toLowerCase();
   lista.innerHTML = "";
   const visibles = platos.filter((p) => p.nombre.toLowerCase().includes(filtro));
-  historialVacio.hidden = platos.length > 0;
+  $("#historial").hidden = platos.length === 0;
+  inputBuscar.hidden = platos.length === 0;
+  $("#bienvenida-texto").textContent = platos.length === 0
+    ? "Crea tu primer plato con “+ Nuevo plato” para empezar a calcular su coste."
+    : "Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.";
 
   for (const p of visibles) {
     const li = document.createElement("li");
