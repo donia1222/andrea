@@ -193,6 +193,7 @@ function abrirCategoria(catId) {
   const nombre = catId === "todos" ? "Todos" : (categorias.find((c) => c.id === catId)?.nombre || "");
   $("#cat-detalle-titulo").textContent = nombre;
   $("#btn-add-platos").hidden = catId === "todos";   // en "Todos" no se añade manualmente
+  $("#btn-eliminar-cat").hidden = catId === "todos"; // "Todos" no se puede eliminar
   inputBuscar.value = "";
   renderLista();
 }
@@ -250,6 +251,17 @@ function quitarDeCategoria(platoId) {
   c.platoIds = c.platoIds.filter((id) => id !== platoId);
   guardarCategorias();
   renderLista();
+}
+
+// Elimina la categoría abierta (no borra los platos, sólo la categoría).
+function eliminarCategoria() {
+  if (!categoriaActual || categoriaActual === "todos") return; // "Todos" no se elimina
+  const c = categorias.find((x) => x.id === categoriaActual);
+  if (!c) return;
+  if (!confirm(`¿Eliminar la categoría "${c.nombre}"? Los platos no se borran, sólo la categoría.`)) return;
+  categorias = categorias.filter((x) => x.id !== categoriaActual);
+  guardarCategorias();
+  volverACategorias();
 }
 
 // --- Modal para añadir platos a la categoría abierta -------------------------
@@ -437,6 +449,7 @@ $("#tab-historial").addEventListener("click", irAlHistorial);
 $("#btn-vacio-crear").addEventListener("click", nuevoPlato);
 $("#btn-volver-cat").addEventListener("click", irAlHistorial);
 $("#btn-add-platos").addEventListener("click", abrirModalAdd);
+$("#btn-eliminar-cat").addEventListener("click", eliminarCategoria);
 $("#modal-cancelar").addEventListener("click", cerrarModalAdd);
 $("#modal-aceptar").addEventListener("click", confirmarAdd);
 $("#modal-add").addEventListener("click", (e) => { if (e.target.id === "modal-add") cerrarModalAdd(); });

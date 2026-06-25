@@ -172,6 +172,10 @@ label {
   background: var(--primary-soft);
 }
 .btn-add:hover { background: #e6e9ff; }
+#btn-eliminar-cat {
+  width: 100%;
+  margin-top: 20px;
+}
 
 /* ===== Foto ===== */
 .foto-caja {
