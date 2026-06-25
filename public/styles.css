@@ -1,0 +1,145 @@
+:root {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --texto: #1f2933;
+  --suave: #647084;
+  --borde: #e1e6ec;
+  --primary: #2563eb;
+  --primary-d: #1d4ed8;
+  --peligro: #dc2626;
+  --ok: #16a34a;
+  --radio: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--texto);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--borde);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar h1 { font-size: 1.25rem; margin: 0; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  align-items: start;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 1.25rem;
+}
+
+/* Historial */
+.historial h2 { margin-top: 0; font-size: 1rem; }
+.lista-platos { list-style: none; margin: .75rem 0 0; padding: 0; }
+.lista-platos li {
+  padding: .65rem .75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  border: 1px solid transparent;
+}
+.lista-platos li:hover { background: #f0f4ff; }
+.lista-platos li.activo { background: #e8efff; border-color: #c7d7ff; }
+.lista-platos .nombre { font-weight: 600; }
+.lista-platos .coste { color: var(--suave); font-variant-numeric: tabular-nums; }
+.vacio { color: var(--suave); font-size: .9rem; }
+
+/* Campos */
+.campo { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1rem; }
+label { font-size: .85rem; color: var(--suave); font-weight: 600; }
+
+.input, select {
+  font: inherit;
+  padding: .55rem .65rem;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--texto);
+}
+.input:focus, select:focus { outline: 2px solid #bfd3ff; border-color: var(--primary); }
+.input-mini { width: 90px; }
+#buscar { width: 100%; margin-top: .5rem; }
+
+/* Botones */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  padding: .55rem .9rem;
+  border-radius: 8px;
+  border: 1px solid var(--borde);
+  background: #fff;
+  cursor: pointer;
+}
+.btn:hover { background: #f5f7fa; }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-d); }
+.btn-peligro { color: var(--peligro); border-color: #f3c0c0; }
+.btn-peligro:hover { background: #fdeaea; }
+
+/* Tabla de ingredientes */
+.ingredientes-cabecera {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: .5rem 0;
+}
+.ingredientes-cabecera h2 { font-size: 1rem; margin: 0; }
+.tabla-wrap { overflow-x: auto; }
+.tabla-ing { width: 100%; border-collapse: collapse; }
+.tabla-ing th, .tabla-ing td { padding: .4rem .35rem; text-align: left; }
+.tabla-ing th { font-size: .75rem; color: var(--suave); text-transform: uppercase; letter-spacing: .03em; }
+.tabla-ing th.num, .tabla-ing td.num { text-align: right; }
+.tabla-ing tbody tr { border-top: 1px solid var(--borde); }
+.tabla-ing input { width: 100%; min-width: 90px; }
+.tabla-ing input.precio, .tabla-ing input.cant { min-width: 80px; }
+.celda-coste { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.btn-borrar-fila {
+  border: none; background: transparent; cursor: pointer;
+  color: var(--peligro); font-size: 1.1rem; line-height: 1; padding: .2rem .4rem;
+}
+
+/* Total */
+.total {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 1rem; padding: .9rem 1rem;
+  background: #f0f4ff; border-radius: 10px; font-size: 1.05rem;
+}
+.total strong { font-size: 1.3rem; color: var(--primary-d); font-variant-numeric: tabular-nums; }
+
+.raciones {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  margin-top: .85rem;
+}
+.raciones .por-racion { color: var(--suave); margin-left: auto; }
+
+.acciones { display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; }
+.aviso { color: var(--ok); font-weight: 600; font-size: .9rem; }
+
+.bienvenida { color: var(--suave); }
+
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; }
+}

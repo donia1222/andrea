@@ -1,0 +1,11 @@
+{
+  "name": "coste-menus",
+  "version": "1.0.0",
+  "description": "Calculadora sencilla del coste de los platos de un menú de restaurante. Guarda los datos en el navegador (localStorage).",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
