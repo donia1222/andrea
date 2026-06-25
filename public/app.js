@@ -120,8 +120,10 @@ function renderLista() {
   const filtro = inputBuscar.value.trim().toLowerCase();
   lista.innerHTML = "";
   const visibles = platos.filter((p) => p.nombre.toLowerCase().includes(filtro));
-  $("#historial").hidden = platos.length === 0;
-  inputBuscar.hidden = platos.length === 0;
+  const sinPlatos = platos.length === 0;
+  $("#historial").hidden = sinPlatos;
+  inputBuscar.hidden = sinPlatos;
+  document.querySelector(".layout").classList.toggle("sin-historial", sinPlatos);
   $("#bienvenida-texto").textContent = platos.length === 0
     ? "Crea tu primer plato con “+ Nuevo plato” para empezar a calcular su coste."
     : "Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.";

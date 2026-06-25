@@ -47,6 +47,8 @@ body {
   margin: 0 auto;
 }
 
+.layout.sin-historial { grid-template-columns: 1fr; }
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--borde);
