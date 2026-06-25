@@ -44,20 +44,18 @@ function cargarPlatos() {
     return [];
   }
 }
-function guardarPlatos(platos) {
-  localStorage.setItem(CLAVE, JSON.stringify(platos));
+function guardarPlatos(p) {
+  localStorage.setItem(CLAVE, JSON.stringify(p));
 }
 const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 // --- Estado en memoria -------------------------------------------------------
 let platos = cargarPlatos();
-let actual = null; // plato que se está editando (copia de trabajo)
+let actual = null; // plato que se está creando/editando (copia de trabajo)
 
 // --- Referencias al DOM ------------------------------------------------------
 const $ = (sel) => document.querySelector(sel);
 const lista = $("#lista-platos");
-const editor = $("#editor");
-const bienvenida = $("#bienvenida");
 const cuerpoIng = $("#cuerpo-ing");
 const inputNombre = $("#nombre-plato");
 const inputBuscar = $("#buscar");
@@ -67,6 +65,15 @@ const fotoPreview = $("#foto-preview");
 const fotoPlaceholder = $("#foto-placeholder");
 const btnQuitarFoto = $("#btn-quitar-foto");
 
+// --- Navegación entre vistas (pestañas) -------------------------------------
+function mostrarVista(nombre) {
+  $("#vista-crear").hidden = nombre !== "crear";
+  $("#vista-historial").hidden = nombre !== "historial";
+  $("#tab-crear").classList.toggle("active", nombre === "crear");
+  $("#tab-historial").classList.toggle("active", nombre === "historial");
+}
+
+// --- Imagen ------------------------------------------------------------------
 // Reduce y comprime la imagen elegida a un máximo de 600 px (lado mayor) y la
 // devuelve como data URL (JPEG), para que ocupe poco en localStorage.
 function procesarImagen(file, maxLado = 600) {
@@ -115,31 +122,32 @@ function renderFoto() {
   }
 }
 
-// --- Render del historial ----------------------------------------------------
+// --- Historial (lista de platos guardados) -----------------------------------
 function renderLista() {
   const filtro = inputBuscar.value.trim().toLowerCase();
   lista.innerHTML = "";
-  const visibles = platos.filter((p) => p.nombre.toLowerCase().includes(filtro));
   const sinPlatos = platos.length === 0;
-  $("#historial").hidden = sinPlatos;
+  $("#historial-vacio").hidden = !sinPlatos;
   inputBuscar.hidden = sinPlatos;
-  document.querySelector(".layout").classList.toggle("sin-historial", sinPlatos);
-  $("#bienvenida-texto").textContent = platos.length === 0
-    ? "Crea tu primer plato con “+ Nuevo plato” para empezar a calcular su coste."
-    : "Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.";
 
+  const visibles = platos.filter((p) => p.nombre.toLowerCase().includes(filtro));
   for (const p of visibles) {
     const li = document.createElement("li");
-    if (actual && p.id === actual.id) li.classList.add("activo");
     const mini = p.foto
       ? `<img class="miniatura" src="${p.foto}" alt="">`
-      : `<div class="miniatura"></div>`;
-    li.innerHTML = `${mini}<span class="info">
+      : `<div class="miniatura vacia"><svg class="ic"><use href="#i-image"/></svg></div>`;
+    li.innerHTML = `${mini}
+      <span class="info">
         <span class="nombre"></span>
         <span class="coste">${fmt(costeTotal(p))}</span>
-      </span>`;
+      </span>
+      <button class="btn-borrar-plato" title="Eliminar plato"><svg class="ic ic-sm"><use href="#i-trash"/></svg></button>`;
     li.querySelector(".nombre").textContent = p.nombre || "(sin nombre)";
     li.addEventListener("click", () => abrirPlato(p.id));
+    li.querySelector(".btn-borrar-plato").addEventListener("click", (e) => {
+      e.stopPropagation();
+      eliminarPlato(p.id);
+    });
     lista.appendChild(li);
   }
 }
@@ -152,6 +160,7 @@ function opcionesUnidad(sel) {
 }
 
 function renderIngredientes() {
+  document.querySelector(".tabla-wrap").hidden = actual.ingredientes.length === 0;
   cuerpoIng.innerHTML = "";
   actual.ingredientes.forEach((ing, i) => {
     const tr = document.createElement("tr");
@@ -162,7 +171,7 @@ function renderIngredientes() {
       <td data-label="Cantidad usada"><input class="input cant" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" value="${ing.cantidad ?? ""}"></td>
       <td data-label="unidad"><select class="uc">${opcionesUnidad(ing.unidadCant)}</select></td>
       <td data-label="Coste" class="num celda-coste">${fmt(costeIngrediente(ing))}</td>
-      <td class="fila-borrar"><button class="btn-borrar-fila" title="Eliminar ingrediente">✕ Eliminar</button></td>
+      <td class="fila-borrar"><button class="btn-borrar-fila" title="Eliminar ingrediente"><svg class="ic ic-sm"><use href="#i-trash"/></svg> Eliminar</button></td>
     `;
 
     tr.querySelector(".nombre").addEventListener("input", (e) => { ing.nombre = e.target.value; });
@@ -193,38 +202,31 @@ function ingredienteVacio() {
   return { nombre: "", precio: "", unidadPrecio: "kg", cantidad: "", unidadCant: "g" };
 }
 
-function abrirEditor() {
-  editor.hidden = false;
-  bienvenida.hidden = true;
-}
-
-function nuevoPlato() {
-  actual = { id: null, nombre: "", foto: null, ingredientes: [] };
-  inputNombre.value = "";
-  $("#btn-eliminar").hidden = true;
+function cargarEnEditor(plato, titulo) {
+  actual = plato;
+  if (actual.foto === undefined) actual.foto = null;
+  $("#editor-titulo").textContent = titulo;
+  inputNombre.value = actual.nombre;
+  $("#btn-eliminar").hidden = !actual.id;
   $("#aviso-guardado").textContent = "";
-  abrirEditor();
   renderFoto();
   renderIngredientes();
   recalcular();
-  renderLista();
+}
+
+// Pestaña "Crear plato": siempre empieza un plato nuevo y vacío.
+function nuevoPlato() {
+  cargarEnEditor({ id: null, nombre: "", foto: null, ingredientes: [] }, "Nuevo plato");
+  mostrarVista("crear");
   inputNombre.focus();
 }
 
+// Abre un plato del historial para editarlo (copia de trabajo).
 function abrirPlato(id) {
   const p = platos.find((x) => x.id === id);
   if (!p) return;
-  // copia de trabajo para no mutar el guardado hasta pulsar "Guardar"
-  actual = JSON.parse(JSON.stringify(p));
-  inputNombre.value = actual.nombre;
-  if (actual.foto === undefined) actual.foto = null;
-  $("#btn-eliminar").hidden = false;
-  $("#aviso-guardado").textContent = "";
-  abrirEditor();
-  renderFoto();
-  renderIngredientes();
-  recalcular();
-  renderLista();
+  cargarEnEditor(JSON.parse(JSON.stringify(p)), "Editar plato");
+  mostrarVista("crear");
 }
 
 function guardar() {
@@ -235,32 +237,36 @@ function guardar() {
   } else {
     actual.id = nuevoId();
     platos.unshift(JSON.parse(JSON.stringify(actual)));
-    $("#btn-eliminar").hidden = false;
   }
   guardarPlatos(platos);
+  actual = null;           // limpia el panel
   renderLista();
-  const aviso = $("#aviso-guardado");
-  aviso.textContent = "✓ Guardado";
-  setTimeout(() => (aviso.textContent = ""), 2000);
+  mostrarVista("historial"); // pasa al historial
 }
 
+// "No guardar": descarta los cambios y vuelve al historial.
 function cancelar() {
-  // Cierra el editor descartando los cambios (se trabaja sobre una copia,
-  // así que lo guardado en localStorage no se ha modificado).
   actual = null;
-  editor.hidden = true;
-  bienvenida.hidden = false;
   renderLista();
+  mostrarVista("historial");
 }
 
+// Eliminar desde el editor (el plato que se está editando).
 function eliminar() {
-  if (!actual?.id) return;
-  if (!confirm(`¿Eliminar el plato "${actual.nombre}"?`)) return;
-  platos = platos.filter((p) => p.id !== actual.id);
+  if (actual?.id) eliminarPlato(actual.id, true);
+}
+
+// Eliminar un plato por id (desde la lista o el editor).
+function eliminarPlato(id, volverAlHistorial = false) {
+  const p = platos.find((x) => x.id === id);
+  if (!p) return;
+  if (!confirm(`¿Eliminar el plato "${p.nombre}"?`)) return;
+  platos = platos.filter((x) => x.id !== id);
   guardarPlatos(platos);
-  actual = null;
-  editor.hidden = true;
-  bienvenida.hidden = false;
+  if (volverAlHistorial || (actual && actual.id === id)) {
+    actual = null;
+    mostrarVista("historial");
+  }
   renderLista();
 }
 
@@ -269,7 +275,12 @@ function escapar(s) {
 }
 
 // --- Eventos -----------------------------------------------------------------
-$("#btn-nuevo").addEventListener("click", nuevoPlato);
+$("#tab-crear").addEventListener("click", nuevoPlato);
+$("#tab-historial").addEventListener("click", () => {
+  renderLista();
+  mostrarVista("historial");
+});
+$("#btn-vacio-crear").addEventListener("click", nuevoPlato);
 $("#btn-add-ing").addEventListener("click", () => {
   actual.ingredientes.push(ingredienteVacio());
   renderIngredientes();
@@ -302,4 +313,10 @@ inputNombre.addEventListener("input", () => { if (actual) actual.nombre = inputN
 inputBuscar.addEventListener("input", renderLista);
 
 // --- Inicio ------------------------------------------------------------------
+// Si ya hay platos guardados, abrimos el Historial; si no, el formulario de Crear.
 renderLista();
+if (platos.length > 0) {
+  mostrarVista("historial");
+} else {
+  nuevoPlato();
+}

@@ -4,78 +4,138 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coste de Menús</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ===== Sprite de iconos SVG (línea, estilo lucide) ===== -->
+  <svg width="0" height="0" class="sprite" aria-hidden="true">
+    <symbol id="i-chef" viewBox="0 0 24 24">
+      <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+      <line x1="6" y1="17" x2="18" y2="17"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24">
+      <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 3"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+    </symbol>
+    <symbol id="i-image" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.6"/>
+      <path d="m21 15-4.5-4.5L6 21"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+      <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </symbol>
+  </svg>
+
   <header class="topbar">
-    <h1>🍽️ Coste de Menús</h1>
-    <button id="btn-nuevo" class="btn btn-primary">+ Nuevo plato</button>
+    <div class="marca">
+      <span class="logo"><svg class="ic"><use href="#i-chef"/></svg></span>
+      <span class="marca-txt">Coste de Menús</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button id="tab-crear" class="tab"><svg class="ic"><use href="#i-plus"/></svg><span>Crear</span></button>
+      <button id="tab-historial" class="tab"><svg class="ic"><use href="#i-history"/></svg><span>Historial</span></button>
+    </nav>
   </header>
 
-  <main class="layout">
-    <!-- Lista / historial de platos guardados -->
-    <aside class="panel historial" id="historial">
-      <input id="buscar" class="input" type="search" placeholder="Buscar plato…" />
-      <ul id="lista-platos" class="lista-platos"></ul>
-    </aside>
+  <main class="contenido">
+    <!-- ===== VISTA: CREAR / EDITAR PLATO ===== -->
+    <section class="vista" id="vista-crear">
+      <div class="panel editor">
+        <h2 id="editor-titulo">Nuevo plato</h2>
 
-    <!-- Editor del plato -->
-    <section class="panel editor" id="editor" hidden>
-      <div class="campo">
-        <label for="nombre-plato">Nombre del plato</label>
-        <input id="nombre-plato" class="input" type="text"
-               placeholder="Ej.: Quesadilla de pollo con arroz" />
-      </div>
-
-      <div class="campo">
-        <label>Foto del plato</label>
-        <div id="foto-caja" class="foto-caja" title="Pulsa para añadir una foto">
-          <img id="foto-preview" class="foto-preview" alt="" hidden />
-          <div id="foto-placeholder" class="foto-placeholder">
-            <span>Añadir foto</span>
-          </div>
-          <button id="btn-quitar-foto" class="foto-quitar" type="button" title="Quitar foto" hidden>✕</button>
+        <div class="campo">
+          <label for="nombre-plato">Nombre del plato</label>
+          <input id="nombre-plato" class="input" type="text"
+                 placeholder="Ej.: Quesadilla de pollo con arroz" />
         </div>
-        <input id="foto-input" type="file" accept="image/*" hidden />
-      </div>
 
-      <div class="ingredientes-cabecera">
-        <h2>Ingredientes</h2>
-        <button id="btn-add-ing" class="btn">+ Añadir ingrediente</button>
-      </div>
+        <div class="campo">
+          <label>Foto del plato</label>
+          <div id="foto-caja" class="foto-caja" title="Pulsa para añadir una foto">
+            <img id="foto-preview" class="foto-preview" alt="" hidden />
+            <div id="foto-placeholder" class="foto-placeholder">
+              <svg class="ic ic-lg"><use href="#i-image"/></svg>
+              <span>Añadir foto</span>
+            </div>
+            <button id="btn-quitar-foto" class="foto-quitar" type="button" title="Quitar foto" hidden>
+              <svg class="ic ic-sm"><use href="#i-x"/></svg>
+            </button>
+          </div>
+          <input id="foto-input" type="file" accept="image/*" hidden />
+        </div>
 
-      <div class="tabla-wrap">
-        <table class="tabla-ing">
-          <thead>
-            <tr>
-              <th>Ingrediente</th>
-              <th>Precio compra</th>
-              <th>por</th>
-              <th>Cantidad usada</th>
-              <th>unidad</th>
-              <th class="num">Coste</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="cuerpo-ing"></tbody>
-        </table>
-      </div>
+        <div class="ingredientes-cabecera">
+          <h3>Ingredientes</h3>
+        </div>
 
-      <div class="total">
-        <span>Coste total del plato</span>
-        <strong id="coste-total">0.00 CHF</strong>
-      </div>
+        <div class="tabla-wrap">
+          <table class="tabla-ing">
+            <thead>
+              <tr>
+                <th>Ingrediente</th>
+                <th>Precio compra</th>
+                <th>por</th>
+                <th>Cantidad usada</th>
+                <th>unidad</th>
+                <th class="num">Coste</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-ing"></tbody>
+          </table>
+        </div>
 
-      <div class="acciones">
-        <button id="btn-guardar" class="btn btn-primary">Guardar plato</button>
-        <button id="btn-cancelar" class="btn">No guardar</button>
-        <button id="btn-eliminar" class="btn btn-peligro" hidden>Eliminar</button>
-        <span id="aviso-guardado" class="aviso"></span>
+        <button id="btn-add-ing" class="btn btn-add">
+          <svg class="ic ic-sm"><use href="#i-plus"/></svg> Añadir ingrediente
+        </button>
+
+        <div class="total">
+          <span>Coste total del plato</span>
+          <strong id="coste-total">0.00 CHF</strong>
+        </div>
+
+        <div class="acciones">
+          <button id="btn-guardar" class="btn btn-primary">
+            <svg class="ic ic-sm"><use href="#i-check"/></svg> Guardar plato
+          </button>
+          <button id="btn-cancelar" class="btn">No guardar</button>
+          <button id="btn-eliminar" class="btn btn-peligro" hidden>
+            <svg class="ic ic-sm"><use href="#i-trash"/></svg> Eliminar
+          </button>
+          <span id="aviso-guardado" class="aviso"></span>
+        </div>
       </div>
     </section>
 
-    <section class="panel bienvenida" id="bienvenida">
-      <p id="bienvenida-texto">Selecciona un plato de la lista o crea uno nuevo para empezar a calcular su coste.</p>
+    <!-- ===== VISTA: HISTORIAL ===== -->
+    <section class="vista" id="vista-historial" hidden>
+      <div class="panel historial">
+        <div class="buscador">
+          <svg class="ic ic-sm"><use href="#i-search"/></svg>
+          <input id="buscar" class="input" type="search" placeholder="Buscar plato…" />
+        </div>
+        <ul id="lista-platos" class="lista-platos"></ul>
+        <div id="historial-vacio" class="estado-vacio">
+          <svg class="ic ic-xl"><use href="#i-list"/></svg>
+          <p>Aún no has guardado ningún plato.</p>
+          <button id="btn-vacio-crear" class="btn btn-primary">
+            <svg class="ic ic-sm"><use href="#i-plus"/></svg> Crear mi primer plato
+          </button>
+        </div>
+      </div>
     </section>
   </main>
 
