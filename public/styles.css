@@ -287,6 +287,82 @@ label {
 .estado-vacio .ic { color: var(--tenue); }
 .estado-vacio p { margin: 0; font-size: .95rem; }
 
+/* ===== Rejilla de categorías ===== */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .9rem;
+}
+.cat-card {
+  position: relative;
+  aspect-ratio: 1.45 / 1;
+  border-radius: var(--radio);
+  border: 1px solid var(--borde);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: .95rem;
+  text-align: left;
+  color: var(--texto);
+  background: linear-gradient(135deg, #eef1ff, #f6f3ff) center/cover no-repeat;
+  box-shadow: var(--sombra-sm);
+  transition: transform .12s, box-shadow .15s;
+  font: inherit;
+}
+.cat-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-lg); }
+.cat-card.con-foto { color: #fff; border-color: transparent; }
+.cat-card-icono { position: absolute; top: .9rem; left: .9rem; color: var(--primary); opacity: .55; }
+.cat-card-pie { position: relative; z-index: 1; display: flex; flex-direction: column; gap: .12rem; }
+.cat-card-nombre { font-weight: 800; font-size: 1.05rem; letter-spacing: -.01em; line-height: 1.2; }
+.cat-card-num { font-size: .8rem; font-weight: 600; opacity: .82; }
+.cat-card-nueva {
+  align-items: center; justify-content: center;
+  gap: .45rem;
+  border-style: dashed; border-color: #c9cdfb;
+  background: var(--primary-soft);
+  color: var(--primary-d); font-weight: 700;
+}
+.cat-card-nueva:hover { background: #e6e9ff; }
+
+/* ===== Detalle de categoría ===== */
+.detalle-cabecera { display: flex; align-items: center; gap: .65rem; margin-bottom: 1rem; }
+.detalle-cabecera h2 { margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: -.02em; }
+.btn-icono { padding: .5rem; width: 40px; height: 40px; }
+#btn-add-platos { margin-top: 1rem; }
+
+/* ===== Modal ===== */
+.modal {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(15, 23, 42, .45);
+  backdrop-filter: blur(3px);
+  display: grid; place-items: center;
+  padding: 1rem;
+  animation: aparece .15s ease;
+}
+.modal-caja {
+  background: #fff;
+  border-radius: var(--radio);
+  padding: 1.4rem;
+  width: 100%; max-width: 460px; max-height: 82vh; overflow: auto;
+  box-shadow: var(--sombra-lg);
+}
+.modal-caja h3 { margin: 0 0 .25rem; font-size: 1.15rem; font-weight: 800; }
+.modal-sub { margin: 0 0 1rem; color: var(--suave); font-size: .9rem; }
+.modal-vacio { color: var(--suave); text-align: center; padding: 1rem; }
+.modal-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+.modal-item {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .5rem .6rem; border-radius: 10px;
+  border: 1px solid var(--borde); cursor: pointer;
+  transition: background .12s;
+}
+.modal-item:hover { background: #f7f8fb; }
+.modal-item input { width: 18px; height: 18px; accent-color: var(--primary); flex: 0 0 auto; cursor: pointer; }
+.modal-item .miniatura { width: 40px; height: 40px; border-radius: 8px; }
+.modal-item .nombre { font-weight: 600; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modal-item .coste { color: var(--suave); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.modal-acciones { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.25rem; }
+
 /* ===== Móvil: ingredientes como tarjetas apiladas ===== */
 @media (max-width: 620px) {
   .topbar { padding: .7rem .9rem; flex-wrap: wrap; gap: .65rem; }

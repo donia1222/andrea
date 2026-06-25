@@ -122,22 +122,55 @@
 
     <!-- ===== VISTA: HISTORIAL ===== -->
     <section class="vista" id="vista-historial" hidden>
-      <div class="panel historial">
-        <div class="buscador">
-          <svg class="ic ic-sm"><use href="#i-search"/></svg>
-          <input id="buscar" class="input" type="search" placeholder="Buscar plato…" />
+
+      <!-- Sub-vista A: rejilla de categorías -->
+      <div id="cat-grid-vista">
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+
+      <!-- Sub-vista B: detalle de una categoría -->
+      <div id="cat-detalle-vista" hidden>
+        <div class="detalle-cabecera">
+          <button id="btn-volver-cat" class="btn btn-icono" title="Volver a categorías">
+            <svg class="ic"><use href="#i-x"/></svg>
+          </button>
+          <h2 id="cat-detalle-titulo"></h2>
         </div>
-        <ul id="lista-platos" class="lista-platos"></ul>
-        <div id="historial-vacio" class="estado-vacio">
-          <svg class="ic ic-xl"><use href="#i-list"/></svg>
-          <p>Aún no has guardado ningún plato.</p>
-          <button id="btn-vacio-crear" class="btn btn-primary">
-            <svg class="ic ic-sm"><use href="#i-plus"/></svg> Crear mi primer plato
+
+        <div class="panel historial">
+          <div class="buscador">
+            <svg class="ic ic-sm"><use href="#i-search"/></svg>
+            <input id="buscar" class="input" type="search" placeholder="Buscar plato…" />
+          </div>
+          <ul id="lista-platos" class="lista-platos"></ul>
+          <div id="historial-vacio" class="estado-vacio">
+            <svg class="ic ic-xl"><use href="#i-list"/></svg>
+            <p id="historial-vacio-txt">No hay platos en esta categoría.</p>
+            <button id="btn-vacio-crear" class="btn btn-primary">
+              <svg class="ic ic-sm"><use href="#i-plus"/></svg> Crear mi primer plato
+            </button>
+          </div>
+          <button id="btn-add-platos" class="btn btn-add" hidden>
+            <svg class="ic ic-sm"><use href="#i-plus"/></svg> Añadir platos a esta categoría
           </button>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- ===== Modal: elegir platos para añadir a la categoría ===== -->
+  <div id="modal-add" class="modal" hidden>
+    <div class="modal-caja">
+      <h3>Añadir platos</h3>
+      <p class="modal-sub">Elige los platos que quieres incluir en esta categoría.</p>
+      <ul id="modal-lista" class="modal-lista"></ul>
+      <p id="modal-vacio" class="modal-vacio" hidden>Ya están todos tus platos en esta categoría.</p>
+      <div class="modal-acciones">
+        <button id="modal-cancelar" class="btn">Cancelar</button>
+        <button id="modal-aceptar" class="btn btn-primary">Añadir seleccionados</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

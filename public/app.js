@@ -47,11 +47,24 @@ function cargarPlatos() {
 function guardarPlatos(p) {
   localStorage.setItem(CLAVE, JSON.stringify(p));
 }
+const CLAVE_CAT = "coste-menus:categorias:v1";
+function cargarCategorias() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_CAT)) || [];
+  } catch {
+    return [];
+  }
+}
+function guardarCategorias() {
+  localStorage.setItem(CLAVE_CAT, JSON.stringify(categorias));
+}
 const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 // --- Estado en memoria -------------------------------------------------------
 let platos = cargarPlatos();
-let actual = null; // plato que se está creando/editando (copia de trabajo)
+let categorias = cargarCategorias(); // [{ id, nombre, platoIds: [] }]
+let actual = null;          // plato que se está creando/editando (copia de trabajo)
+let categoriaActual = null; // "todos", id de categoría, o null (rejilla)
 
 // --- Referencias al DOM ------------------------------------------------------
 const $ = (sel) => document.querySelector(sel);
@@ -122,15 +135,92 @@ function renderFoto() {
   }
 }
 
-// --- Historial (lista de platos guardados) -----------------------------------
+// --- Historial: rejilla de categorías ----------------------------------------
+// Devuelve los platos que pertenecen a una categoría (id="todos" => todos).
+function platosDe(catId) {
+  if (catId === "todos") return platos;
+  const c = categorias.find((x) => x.id === catId);
+  return c ? platos.filter((p) => c.platoIds.includes(p.id)) : [];
+}
+
+function tarjetaCategoria(catId, nombre, ps) {
+  const card = document.createElement("button");
+  card.className = "cat-card";
+  const foto = ps.find((p) => p.foto)?.foto;
+  if (foto) {
+    card.classList.add("con-foto");
+    card.style.backgroundImage = `linear-gradient(180deg, rgba(15,23,42,.15), rgba(15,23,42,.72)), url("${foto}")`;
+  }
+  const n = ps.length;
+  card.innerHTML = `
+    ${foto ? "" : `<svg class="ic ic-lg cat-card-icono"><use href="#i-list"/></svg>`}
+    <span class="cat-card-pie">
+      <span class="cat-card-nombre"></span>
+      <span class="cat-card-num">${n} ${n === 1 ? "plato" : "platos"}</span>
+    </span>`;
+  card.querySelector(".cat-card-nombre").textContent = nombre;
+  card.addEventListener("click", () => abrirCategoria(catId));
+  return card;
+}
+
+function renderCategorias() {
+  const grid = $("#cat-grid");
+  grid.innerHTML = "";
+  grid.appendChild(tarjetaCategoria("todos", "Todos", platos));
+  for (const c of categorias) {
+    grid.appendChild(tarjetaCategoria(c.id, c.nombre, platosDe(c.id)));
+  }
+  // Tarjeta para crear una nueva categoría
+  const nueva = document.createElement("button");
+  nueva.className = "cat-card cat-card-nueva";
+  nueva.innerHTML = `<svg class="ic ic-lg"><use href="#i-plus"/></svg><span>Nueva categoría</span>`;
+  nueva.addEventListener("click", crearCategoria);
+  grid.appendChild(nueva);
+}
+
+function crearCategoria() {
+  const nombre = prompt("Nombre de la nueva categoría:");
+  if (!nombre || !nombre.trim()) return;
+  categorias.push({ id: nuevoId(), nombre: nombre.trim(), platoIds: [] });
+  guardarCategorias();
+  renderCategorias();
+}
+
+function abrirCategoria(catId) {
+  categoriaActual = catId;
+  $("#cat-grid-vista").hidden = true;
+  $("#cat-detalle-vista").hidden = false;
+  const nombre = catId === "todos" ? "Todos" : (categorias.find((c) => c.id === catId)?.nombre || "");
+  $("#cat-detalle-titulo").textContent = nombre;
+  $("#btn-add-platos").hidden = catId === "todos";   // en "Todos" no se añade manualmente
+  inputBuscar.value = "";
+  renderLista();
+}
+
+function volverACategorias() {
+  categoriaActual = null;
+  $("#cat-detalle-vista").hidden = true;
+  $("#cat-grid-vista").hidden = false;
+  renderCategorias();
+}
+
+// --- Historial: lista de platos de la categoría abierta ----------------------
 function renderLista() {
+  if (!categoriaActual) return; // estamos en la rejilla, nada que listar
   const filtro = inputBuscar.value.trim().toLowerCase();
   lista.innerHTML = "";
-  const sinPlatos = platos.length === 0;
-  $("#historial-vacio").hidden = !sinPlatos;
-  inputBuscar.hidden = sinPlatos;
+  const base = platosDe(categoriaActual);
+  const enTodos = categoriaActual === "todos";
 
-  const visibles = platos.filter((p) => p.nombre.toLowerCase().includes(filtro));
+  const vacio = $("#historial-vacio");
+  vacio.hidden = base.length !== 0;
+  $("#btn-vacio-crear").hidden = !enTodos;            // el botón "crear" sólo en Todos
+  $("#historial-vacio-txt").textContent = enTodos
+    ? "Aún no has guardado ningún plato."
+    : "Esta categoría está vacía. Añade platos con el botón de abajo.";
+  $(".buscador").hidden = base.length === 0;
+
+  const visibles = base.filter((p) => p.nombre.toLowerCase().includes(filtro));
   for (const p of visibles) {
     const li = document.createElement("li");
     const mini = p.foto
@@ -141,15 +231,72 @@ function renderLista() {
         <span class="nombre"></span>
         <span class="coste">${fmt(costeTotal(p))}</span>
       </span>
-      <button class="btn-borrar-plato" title="Eliminar plato"><svg class="ic ic-sm"><use href="#i-trash"/></svg></button>`;
+      <button class="btn-borrar-plato" title="${enTodos ? "Eliminar plato" : "Quitar de la categoría"}"><svg class="ic ic-sm"><use href="#i-trash"/></svg></button>`;
     li.querySelector(".nombre").textContent = p.nombre || "(sin nombre)";
     li.addEventListener("click", () => abrirPlato(p.id));
     li.querySelector(".btn-borrar-plato").addEventListener("click", (e) => {
       e.stopPropagation();
-      eliminarPlato(p.id);
+      if (enTodos) eliminarPlato(p.id);
+      else quitarDeCategoria(p.id);
     });
     lista.appendChild(li);
   }
+}
+
+// Quita un plato de la categoría abierta (no lo borra de "Todos").
+function quitarDeCategoria(platoId) {
+  const c = categorias.find((x) => x.id === categoriaActual);
+  if (!c) return;
+  c.platoIds = c.platoIds.filter((id) => id !== platoId);
+  guardarCategorias();
+  renderLista();
+}
+
+// --- Modal para añadir platos a la categoría abierta -------------------------
+function abrirModalAdd() {
+  const c = categorias.find((x) => x.id === categoriaActual);
+  if (!c) return;
+  const disponibles = platos.filter((p) => !c.platoIds.includes(p.id));
+  const ul = $("#modal-lista");
+  ul.innerHTML = "";
+  $("#modal-vacio").hidden = disponibles.length > 0;
+  for (const p of disponibles) {
+    const li = document.createElement("li");
+    li.className = "modal-item";
+    const mini = p.foto
+      ? `<img class="miniatura" src="${p.foto}" alt="">`
+      : `<div class="miniatura vacia"><svg class="ic"><use href="#i-image"/></svg></div>`;
+    li.innerHTML = `
+      <input type="checkbox" value="${p.id}">
+      ${mini}
+      <span class="nombre"></span>
+      <span class="coste">${fmt(costeTotal(p))}</span>`;
+    li.querySelector(".nombre").textContent = p.nombre || "(sin nombre)";
+    li.addEventListener("click", (e) => {
+      if (e.target.tagName !== "INPUT") {
+        const chk = li.querySelector("input");
+        chk.checked = !chk.checked;
+      }
+    });
+    ul.appendChild(li);
+  }
+  $("#modal-add").hidden = false;
+}
+
+function cerrarModalAdd() {
+  $("#modal-add").hidden = true;
+}
+
+function confirmarAdd() {
+  const c = categorias.find((x) => x.id === categoriaActual);
+  if (!c) return cerrarModalAdd();
+  const marcados = [...document.querySelectorAll("#modal-lista input:checked")].map((i) => i.value);
+  for (const id of marcados) {
+    if (!c.platoIds.includes(id)) c.platoIds.push(id);
+  }
+  guardarCategorias();
+  cerrarModalAdd();
+  renderLista();
 }
 
 // --- Editor ------------------------------------------------------------------
@@ -239,15 +386,22 @@ function guardar() {
     platos.unshift(JSON.parse(JSON.stringify(actual)));
   }
   guardarPlatos(platos);
-  actual = null;           // limpia el panel
-  renderLista();
-  mostrarVista("historial"); // pasa al historial
+  actual = null;             // limpia el panel
+  irAlHistorial();           // pasa al historial (rejilla de categorías)
 }
 
 // "No guardar": descarta los cambios y vuelve al historial.
 function cancelar() {
   actual = null;
-  renderLista();
+  irAlHistorial();
+}
+
+// Muestra el Historial empezando por la rejilla de categorías.
+function irAlHistorial() {
+  categoriaActual = null;
+  $("#cat-detalle-vista").hidden = true;
+  $("#cat-grid-vista").hidden = false;
+  renderCategorias();
   mostrarVista("historial");
 }
 
@@ -256,18 +410,21 @@ function eliminar() {
   if (actual?.id) eliminarPlato(actual.id, true);
 }
 
-// Eliminar un plato por id (desde la lista o el editor).
-function eliminarPlato(id, volverAlHistorial = false) {
+// Eliminar un plato del todo (de "Todos" y de cualquier categoría).
+function eliminarPlato(id, desdeEditor = false) {
   const p = platos.find((x) => x.id === id);
   if (!p) return;
-  if (!confirm(`¿Eliminar el plato "${p.nombre}"?`)) return;
+  if (!confirm(`¿Eliminar el plato "${p.nombre}"? Se quitará también de sus categorías.`)) return;
   platos = platos.filter((x) => x.id !== id);
+  for (const c of categorias) c.platoIds = c.platoIds.filter((x) => x !== id);
   guardarPlatos(platos);
-  if (volverAlHistorial || (actual && actual.id === id)) {
+  guardarCategorias();
+  if (desdeEditor) {
     actual = null;
-    mostrarVista("historial");
+    irAlHistorial();
+  } else {
+    renderLista();
   }
-  renderLista();
 }
 
 function escapar(s) {
@@ -276,11 +433,13 @@ function escapar(s) {
 
 // --- Eventos -----------------------------------------------------------------
 $("#tab-crear").addEventListener("click", nuevoPlato);
-$("#tab-historial").addEventListener("click", () => {
-  renderLista();
-  mostrarVista("historial");
-});
+$("#tab-historial").addEventListener("click", irAlHistorial);
 $("#btn-vacio-crear").addEventListener("click", nuevoPlato);
+$("#btn-volver-cat").addEventListener("click", irAlHistorial);
+$("#btn-add-platos").addEventListener("click", abrirModalAdd);
+$("#modal-cancelar").addEventListener("click", cerrarModalAdd);
+$("#modal-aceptar").addEventListener("click", confirmarAdd);
+$("#modal-add").addEventListener("click", (e) => { if (e.target.id === "modal-add") cerrarModalAdd(); });
 $("#btn-add-ing").addEventListener("click", () => {
   actual.ingredientes.push(ingredienteVacio());
   renderIngredientes();
@@ -313,10 +472,9 @@ inputNombre.addEventListener("input", () => { if (actual) actual.nombre = inputN
 inputBuscar.addEventListener("input", renderLista);
 
 // --- Inicio ------------------------------------------------------------------
-// Si ya hay platos guardados, abrimos el Historial; si no, el formulario de Crear.
-renderLista();
+// Si ya hay platos guardados, abrimos el Historial (rejilla); si no, Crear.
 if (platos.length > 0) {
-  mostrarVista("historial");
+  irAlHistorial();
 } else {
   nuevoPlato();
 }
