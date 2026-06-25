@@ -61,8 +61,60 @@ const editor = $("#editor");
 const bienvenida = $("#bienvenida");
 const cuerpoIng = $("#cuerpo-ing");
 const inputNombre = $("#nombre-plato");
-const inputRaciones = $("#raciones");
 const inputBuscar = $("#buscar");
+const fotoInput = $("#foto-input");
+const fotoCaja = $("#foto-caja");
+const fotoPreview = $("#foto-preview");
+const fotoPlaceholder = $("#foto-placeholder");
+const btnQuitarFoto = $("#btn-quitar-foto");
+
+// Reduce y comprime la imagen elegida a un máximo de 600 px (lado mayor) y la
+// devuelve como data URL (JPEG), para que ocupe poco en localStorage.
+function procesarImagen(file, maxLado = 600) {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxLado) {
+          height = Math.round((height * maxLado) / width);
+          width = maxLado;
+        } else if (height > maxLado) {
+          width = Math.round((width * maxLado) / height);
+          height = maxLado;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = reject;
+      img.src = lector.result;
+    };
+    lector.onerror = reject;
+    lector.readAsDataURL(file);
+  });
+}
+
+// Pinta (o limpia) la vista previa de la foto del plato en edición.
+function renderFoto() {
+  const foto = actual?.foto;
+  if (foto) {
+    fotoPreview.src = foto;
+    fotoPreview.hidden = false;
+    fotoPlaceholder.hidden = true;
+    btnQuitarFoto.hidden = false;
+    fotoCaja.classList.add("con-foto");
+  } else {
+    fotoPreview.removeAttribute("src");
+    fotoPreview.hidden = true;
+    fotoPlaceholder.hidden = false;
+    btnQuitarFoto.hidden = true;
+    fotoCaja.classList.remove("con-foto");
+  }
+}
 
 // --- Render del historial ----------------------------------------------------
 function renderLista() {
@@ -74,7 +126,13 @@ function renderLista() {
   for (const p of visibles) {
     const li = document.createElement("li");
     if (actual && p.id === actual.id) li.classList.add("activo");
-    li.innerHTML = `<span class="nombre"></span><span class="coste">${fmt(costeTotal(p))}</span>`;
+    const mini = p.foto
+      ? `<img class="miniatura" src="${p.foto}" alt="">`
+      : `<div class="miniatura"></div>`;
+    li.innerHTML = `${mini}<span class="info">
+        <span class="nombre"></span>
+        <span class="coste">${fmt(costeTotal(p))}</span>
+      </span>`;
     li.querySelector(".nombre").textContent = p.nombre || "(sin nombre)";
     li.addEventListener("click", () => abrirPlato(p.id));
     lista.appendChild(li);
@@ -93,13 +151,13 @@ function renderIngredientes() {
   actual.ingredientes.forEach((ing, i) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><input class="input nombre" type="text" placeholder="Ej.: Pollo" value="${escapar(ing.nombre)}"></td>
-      <td><input class="input precio" type="number" min="0" step="0.01" placeholder="0" value="${ing.precio ?? ""}"></td>
-      <td><select class="up">${opcionesUnidad(ing.unidadPrecio)}</select></td>
-      <td><input class="input cant" type="number" min="0" step="0.01" placeholder="0" value="${ing.cantidad ?? ""}"></td>
-      <td><select class="uc">${opcionesUnidad(ing.unidadCant)}</select></td>
-      <td class="num celda-coste">${fmt(costeIngrediente(ing))}</td>
-      <td><button class="btn-borrar-fila" title="Eliminar ingrediente">✕</button></td>
+      <td data-label="Ingrediente"><input class="input nombre" type="text" placeholder="Ej.: Pollo" value="${escapar(ing.nombre)}"></td>
+      <td data-label="Precio compra"><input class="input precio" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" value="${ing.precio ?? ""}"></td>
+      <td data-label="por"><select class="up">${opcionesUnidad(ing.unidadPrecio)}</select></td>
+      <td data-label="Cantidad usada"><input class="input cant" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" value="${ing.cantidad ?? ""}"></td>
+      <td data-label="unidad"><select class="uc">${opcionesUnidad(ing.unidadCant)}</select></td>
+      <td data-label="Coste" class="num celda-coste">${fmt(costeIngrediente(ing))}</td>
+      <td class="fila-borrar"><button class="btn-borrar-fila" title="Eliminar ingrediente">✕ Eliminar</button></td>
     `;
 
     tr.querySelector(".nombre").addEventListener("input", (e) => { ing.nombre = e.target.value; });
@@ -123,10 +181,7 @@ function recalcular() {
     const celda = filas[i]?.querySelector(".celda-coste");
     if (celda) celda.textContent = fmt(costeIngrediente(ing));
   });
-  const total = costeTotal(actual);
-  const raciones = Math.max(1, Number(inputRaciones.value) || 1);
-  $("#coste-total").textContent = fmt(total);
-  $("#coste-racion").textContent = fmt(total / raciones);
+  $("#coste-total").textContent = fmt(costeTotal(actual));
 }
 
 function ingredienteVacio() {
@@ -139,12 +194,12 @@ function abrirEditor() {
 }
 
 function nuevoPlato() {
-  actual = { id: null, nombre: "", raciones: 1, ingredientes: [ingredienteVacio()] };
+  actual = { id: null, nombre: "", foto: null, ingredientes: [] };
   inputNombre.value = "";
-  inputRaciones.value = 1;
   $("#btn-eliminar").hidden = true;
   $("#aviso-guardado").textContent = "";
   abrirEditor();
+  renderFoto();
   renderIngredientes();
   recalcular();
   renderLista();
@@ -156,12 +211,12 @@ function abrirPlato(id) {
   if (!p) return;
   // copia de trabajo para no mutar el guardado hasta pulsar "Guardar"
   actual = JSON.parse(JSON.stringify(p));
-  if (!actual.ingredientes.length) actual.ingredientes.push(ingredienteVacio());
   inputNombre.value = actual.nombre;
-  inputRaciones.value = actual.raciones || 1;
+  if (actual.foto === undefined) actual.foto = null;
   $("#btn-eliminar").hidden = false;
   $("#aviso-guardado").textContent = "";
   abrirEditor();
+  renderFoto();
   renderIngredientes();
   recalcular();
   renderLista();
@@ -169,7 +224,6 @@ function abrirPlato(id) {
 
 function guardar() {
   actual.nombre = inputNombre.value.trim() || "(sin nombre)";
-  actual.raciones = Math.max(1, Number(inputRaciones.value) || 1);
   if (actual.id) {
     const i = platos.findIndex((p) => p.id === actual.id);
     if (i !== -1) platos[i] = JSON.parse(JSON.stringify(actual));
@@ -183,6 +237,15 @@ function guardar() {
   const aviso = $("#aviso-guardado");
   aviso.textContent = "✓ Guardado";
   setTimeout(() => (aviso.textContent = ""), 2000);
+}
+
+function cancelar() {
+  // Cierra el editor descartando los cambios (se trabaja sobre una copia,
+  // así que lo guardado en localStorage no se ha modificado).
+  actual = null;
+  editor.hidden = true;
+  bienvenida.hidden = false;
+  renderLista();
 }
 
 function eliminar() {
@@ -208,9 +271,29 @@ $("#btn-add-ing").addEventListener("click", () => {
   recalcular();
 });
 $("#btn-guardar").addEventListener("click", guardar);
+$("#btn-cancelar").addEventListener("click", cancelar);
 $("#btn-eliminar").addEventListener("click", eliminar);
+fotoCaja.addEventListener("click", () => {
+  if (actual) fotoInput.click();
+});
+fotoInput.addEventListener("change", async () => {
+  const file = fotoInput.files?.[0];
+  if (!file || !actual) return;
+  try {
+    actual.foto = await procesarImagen(file);
+    renderFoto();
+  } catch {
+    alert("No se pudo cargar la imagen.");
+  }
+  fotoInput.value = ""; // permite volver a elegir la misma imagen
+});
+btnQuitarFoto.addEventListener("click", (e) => {
+  e.stopPropagation(); // que no se abra el selector al quitar
+  if (!actual) return;
+  actual.foto = null;
+  renderFoto();
+});
 inputNombre.addEventListener("input", () => { if (actual) actual.nombre = inputNombre.value; });
-inputRaciones.addEventListener("input", recalcular);
 inputBuscar.addEventListener("input", renderLista);
 
 // --- Inicio ------------------------------------------------------------------

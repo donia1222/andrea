@@ -13,6 +13,9 @@
 
 * { box-sizing: border-box; }
 
+/* Que el atributo hidden oculte siempre, aunque el elemento tenga display propio */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -65,9 +68,43 @@ body {
 }
 .lista-platos li:hover { background: #f0f4ff; }
 .lista-platos li.activo { background: #e8efff; border-color: #c7d7ff; }
-.lista-platos .nombre { font-weight: 600; }
-.lista-platos .coste { color: var(--suave); font-variant-numeric: tabular-nums; }
+.lista-platos li { align-items: center; }
+.lista-platos .miniatura {
+  width: 38px; height: 38px; border-radius: 6px; object-fit: cover;
+  flex: 0 0 auto; background: #eef1f5; border: 1px solid var(--borde);
+}
+.lista-platos .info { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.lista-platos .nombre { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-platos .coste { color: var(--suave); font-variant-numeric: tabular-nums; font-size: .85rem; }
 .vacio { color: var(--suave); font-size: .9rem; }
+
+/* Foto del plato: un único recuadro pulsable */
+.foto-caja {
+  position: relative;
+  width: 140px; height: 140px;
+  border-radius: 12px;
+  border: 2px dashed var(--borde);
+  background: #fafbfc;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.foto-caja:hover { border-color: var(--primary); background: #f3f7ff; }
+.foto-caja.con-foto { border-style: solid; }
+.foto-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  color: var(--suave); font-size: .85rem; font-weight: 600;
+}
+.foto-quitar {
+  position: absolute; top: 6px; right: 6px;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: rgba(0, 0, 0, .55); color: #fff;
+  font-size: .9rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.foto-quitar:hover { background: var(--peligro); }
 
 /* Campos */
 .campo { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1rem; }
@@ -129,17 +166,72 @@ label { font-size: .85rem; color: var(--suave); font-weight: 600; }
 }
 .total strong { font-size: 1.3rem; color: var(--primary-d); font-variant-numeric: tabular-nums; }
 
-.raciones {
-  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-  margin-top: .85rem;
-}
-.raciones .por-racion { color: var(--suave); margin-left: auto; }
-
-.acciones { display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; }
+.acciones { display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; flex-wrap: wrap; }
 .aviso { color: var(--ok); font-weight: 600; font-size: .9rem; }
 
 .bienvenida { color: var(--suave); }
 
 @media (max-width: 760px) {
   .layout { grid-template-columns: 1fr; }
+}
+
+/* En móvil: cada ingrediente se muestra como una tarjeta apilada,
+   así nada se desborda hacia la derecha. */
+@media (max-width: 620px) {
+  body { -webkit-text-size-adjust: 100%; }
+  .layout { padding: .85rem; gap: .85rem; }
+  .panel { padding: 1rem; }
+  .topbar { padding: .85rem 1rem; }
+  .topbar h1 { font-size: 1.1rem; }
+
+  .tabla-wrap { overflow-x: visible; }
+  .tabla-ing thead { display: none; }
+  .tabla-ing, .tabla-ing tbody, .tabla-ing tr, .tabla-ing td { display: block; width: 100%; }
+
+  .tabla-ing tr {
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: .35rem .75rem .6rem;
+    margin-bottom: .75rem;
+    background: #fafbfc;
+  }
+  .tabla-ing td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .35rem 0;
+    border: none;
+    text-align: right;
+  }
+  .tabla-ing td::before {
+    content: attr(data-label);
+    flex: 0 0 45%;
+    text-align: left;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--suave);
+  }
+  .tabla-ing td input,
+  .tabla-ing td select {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .tabla-ing td.celda-coste {
+    font-size: 1.05rem;
+    border-top: 1px dashed var(--borde);
+    margin-top: .25rem;
+    padding-top: .55rem;
+  }
+  .tabla-ing td.fila-borrar { justify-content: flex-end; }
+  .tabla-ing td.fila-borrar::before { content: none; }
+  .btn-borrar-fila {
+    font-size: .9rem;
+    border: 1px solid #f3c0c0;
+    border-radius: 8px;
+    padding: .35rem .7rem;
+  }
+
+  .acciones .btn { flex: 1 1 auto; }
 }

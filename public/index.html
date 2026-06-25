@@ -29,6 +29,18 @@
                placeholder="Ej.: Quesadilla de pollo con arroz" />
       </div>
 
+      <div class="campo">
+        <label>Foto del plato</label>
+        <div id="foto-caja" class="foto-caja" title="Pulsa para añadir una foto">
+          <img id="foto-preview" class="foto-preview" alt="" hidden />
+          <div id="foto-placeholder" class="foto-placeholder">
+            <span>Añadir foto</span>
+          </div>
+          <button id="btn-quitar-foto" class="foto-quitar" type="button" title="Quitar foto" hidden>✕</button>
+        </div>
+        <input id="foto-input" type="file" accept="image/*" hidden />
+      </div>
+
       <div class="ingredientes-cabecera">
         <h2>Ingredientes</h2>
         <button id="btn-add-ing" class="btn">+ Añadir ingrediente</button>
@@ -56,14 +68,9 @@
         <strong id="coste-total">0.00 CHF</strong>
       </div>
 
-      <div class="raciones">
-        <label for="raciones">Raciones que salen</label>
-        <input id="raciones" class="input input-mini" type="number" min="1" step="1" value="1" />
-        <span class="por-racion">Coste por ración: <strong id="coste-racion">0.00 CHF</strong></span>
-      </div>
-
       <div class="acciones">
         <button id="btn-guardar" class="btn btn-primary">Guardar plato</button>
+        <button id="btn-cancelar" class="btn">No guardar</button>
         <button id="btn-eliminar" class="btn btn-peligro" hidden>Eliminar</button>
         <span id="aviso-guardado" class="aviso"></span>
       </div>
