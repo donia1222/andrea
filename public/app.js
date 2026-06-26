@@ -484,6 +484,21 @@ btnQuitarFoto.addEventListener("click", (e) => {
 inputNombre.addEventListener("input", () => { if (actual) actual.nombre = inputNombre.value; });
 inputBuscar.addEventListener("input", renderLista);
 
+// --- Header fijo: sombra al hacer scroll y espacio bajo el header ------------
+const topbar = document.querySelector(".topbar");
+const actualizarSombraHeader = () => {
+  topbar.classList.toggle("scrolled", window.scrollY > 4);
+};
+// El header es fixed, así que reservamos su altura como padding del body
+// (se recalcula al cambiar el tamaño, p. ej. cuando en móvil ocupa dos líneas).
+const ajustarEspacioHeader = () => {
+  document.body.style.paddingTop = topbar.offsetHeight + "px";
+};
+window.addEventListener("scroll", actualizarSombraHeader, { passive: true });
+window.addEventListener("resize", ajustarEspacioHeader);
+ajustarEspacioHeader();
+actualizarSombraHeader();
+
 // --- Inicio ------------------------------------------------------------------
 // Si ya hay platos guardados, abrimos el Historial (rejilla); si no, Crear.
 if (platos.length > 0) {
